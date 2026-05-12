@@ -1,4 +1,6 @@
 {
   "key.categories.autoquickloot": "Auto Quick Loot",
-  "key.autoquickloot.activate": "Activate Quick Loot"
+  "key.autoquickloot.activate": "Activate Quick Loot",
+  "key.autoquickloot.toggle": "Toggle Quick Loot",
+  "key.autoquickloot.editHudPosition": "Edit HUD Position"
 }

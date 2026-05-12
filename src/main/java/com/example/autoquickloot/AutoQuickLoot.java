@@ -35,54 +35,63 @@ import org.lwjgl.glfw.GLFW;
 public class AutoQuickLoot {
 
     // -------------------------------------------------------------------------
+    // HUD label constants — public so HudPositionScreen can mirror them exactly
+    // -------------------------------------------------------------------------
+    public static final String HUD_TEXT    = "Auto Quick Loot is enabled";
+    public static final int    HUD_COLOR   = 0x55FF55; // Minecraft §a green
+    public static final int    HUD_PADDING = 2;
+
+    // -------------------------------------------------------------------------
     // Shared state
     // -------------------------------------------------------------------------
     private static final WeakHashMap<Screen, Boolean> triggered = new WeakHashMap<>();
 
-    /** Keybinding that triggers loot when held while a loot screen is open (original behaviour). */
+    /** Original hold-key: trigger loot while held on a screen. */
     public static KeyMapping quickLootKey;
 
-    /** Keybinding that toggles the automatic loot mode on/off. */
+    /** Toggle key: flip auto-loot on/off. */
     public static KeyMapping toggleKey;
+
+    /** Edit HUD position key: open the drag-to-reposition screen. */
+    public static KeyMapping hudPositionKey;
 
     /** Whether toggle mode is currently active. */
     public static volatile boolean toggleEnabled = false;
-
-    // -------------------------------------------------------------------------
-    // HUD label
-    // -------------------------------------------------------------------------
-    private static final String HUD_TEXT    = "Auto Quick Loot is enabled";
-    private static final int    HUD_COLOR   = 0x55FF55; // Minecraft §a green
-    private static final int    HUD_PADDING = 2;        // extra padding around the text box
 
     // -------------------------------------------------------------------------
     // Constructor — register config
     // -------------------------------------------------------------------------
     public AutoQuickLoot() {
         Config.register();
-
-        // Honour the "enabled by default" config option
         toggleEnabled = Config.TOGGLE_ENABLED_BY_DEFAULT.get();
     }
 
     // =========================================================================
-    // CLIENT EVENT BUS (game events)
+    // CLIENT EVENT BUS
     // =========================================================================
     @Mod.EventBusSubscriber(modid = "autoquickloot", value = {Dist.CLIENT})
     public static class ClientEvents {
 
         // ---------------------------------------------------------------------
-        // Key input — toggle on/off
+        // Key input
         // ---------------------------------------------------------------------
         @SubscribeEvent
         public static void onKeyInput(InputEvent.Key event) {
-            if (toggleKey == null) return;
-
-            // Only react on key press (action == 1), not hold or release
             if (event.getAction() != GLFW.GLFW_PRESS) return;
 
-            if (toggleKey.getKey().getValue() == event.getKey()) {
+            int key = event.getKey();
+
+            // Toggle auto-loot on/off
+            if (toggleKey != null && toggleKey.getKey().getValue() == key) {
                 toggleEnabled = !toggleEnabled;
+            }
+
+            // Open HUD position editor
+            if (hudPositionKey != null && hudPositionKey.getKey().getValue() == key) {
+                Minecraft mc = Minecraft.getInstance();
+                if (mc.screen == null) { // only open when no other screen is up
+                    mc.setScreen(new HudPositionScreen());
+                }
             }
         }
 
@@ -97,19 +106,15 @@ public class AutoQuickLoot {
             Minecraft mc = Minecraft.getInstance();
             if (mc.player == null || mc.level == null) return;
 
-            // Determine whether we should act:
-            //   • toggle mode is active, OR
-            //   • the original hold-key is currently held down
+            // Act if toggle is on OR the hold-key is currently pressed
             boolean holdKeyPressed = false;
             if (quickLootKey != null) {
-                long window = mc.getWindow().getWindow();
-                int keyCode = quickLootKey.getKey().getValue();
+                long window  = mc.getWindow().getWindow();
+                int  keyCode = quickLootKey.getKey().getValue();
                 holdKeyPressed = GLFW.glfwGetKey(window, keyCode) == GLFW.GLFW_PRESS;
             }
-
             if (!toggleEnabled && !holdKeyPressed) return;
 
-            // Already processed this screen instance?
             if (triggered.getOrDefault(screen, false)) return;
 
             // Must be looking at a supported Lootr container
@@ -127,7 +132,7 @@ public class AutoQuickLoot {
                 return;
             }
 
-            // Verify the MnS quick-loot button is present on this screen
+            // Verify the MnS quick-loot button is present
             boolean foundButton = false;
             if (screen.renderables != null) {
                 for (Renderable renderable : screen.renderables) {
@@ -140,25 +145,22 @@ public class AutoQuickLoot {
             }
             if (!foundButton) return;
 
-            // Fire the loot packet and close the screen
             Packets.sendToServer((MyPacket) new BackPackLootMenuPacket(BackPackLootMenuPacket.Mode.DROP));
             Minecraft.getInstance().setScreen(null);
             triggered.put(screen, true);
         }
 
         // ---------------------------------------------------------------------
-        // HUD overlay — "Auto Quick Loot is enabled" notice
+        // HUD overlay
         // ---------------------------------------------------------------------
         @SubscribeEvent
         public static void onRenderHud(RenderGuiOverlayEvent.Post event) {
-            // Only draw after the chat overlay so we sit on top of most UI
             if (event.getOverlay() != VanillaGuiOverlay.CHAT_PANEL.type()) return;
-
             if (!toggleEnabled) return;
             if (!Config.HUD_ENABLED.get()) return;
 
             Minecraft mc = Minecraft.getInstance();
-            if (mc.screen != null) return; // don't draw while a GUI screen is open
+            if (mc.screen != null) return; // hide while any GUI is open
 
             GuiGraphics graphics  = event.getGuiGraphics();
             Font        font      = mc.font;
@@ -167,32 +169,14 @@ public class AutoQuickLoot {
 
             int textWidth  = font.width(HUD_TEXT);
             int textHeight = font.lineHeight;
-            int offsetX    = Config.HUD_OFFSET_X.get();
-            int offsetY    = Config.HUD_OFFSET_Y.get();
 
-            // Resolve pixel position from anchor
-            int x, y;
-            switch (Config.getHudAnchor()) {
-                case TOP_LEFT:
-                    x = offsetX;
-                    y = offsetY;
-                    break;
-                case TOP_RIGHT:
-                    x = scrWidth - textWidth - offsetX;
-                    y = offsetY;
-                    break;
-                case BOTTOM_LEFT:
-                    x = offsetX;
-                    y = scrHeight - textHeight - offsetY;
-                    break;
-                case BOTTOM_RIGHT:
-                default:
-                    x = scrWidth  - textWidth  - offsetX;
-                    y = scrHeight - textHeight - offsetY;
-                    break;
-            }
+            // Use saved position, or fall back to bottom-right default
+            int cfgX = Config.HUD_X.get();
+            int cfgY = Config.HUD_Y.get();
+            int x = cfgX >= 0 ? cfgX : scrWidth  - textWidth  - HUD_PADDING - 10;
+            int y = cfgY >= 0 ? cfgY : scrHeight - textHeight - HUD_PADDING - 10;
 
-            // Semi-transparent dark background pill for legibility
+            // Dark background pill
             graphics.fill(
                 x - HUD_PADDING,
                 y - HUD_PADDING,
@@ -207,14 +191,13 @@ public class AutoQuickLoot {
     }
 
     // =========================================================================
-    // MOD EVENT BUS (registration)
+    // MOD EVENT BUS — registration
     // =========================================================================
     @Mod.EventBusSubscriber(modid = "autoquickloot", value = {Dist.CLIENT}, bus = Mod.EventBusSubscriber.Bus.MOD)
     public static class ModEvents {
 
         @SubscribeEvent
         public static void registerKeyBindings(RegisterKeyMappingsEvent event) {
-            // Original hold-to-loot key (default: Left Ctrl)
             quickLootKey = new KeyMapping(
                     "key.autoquickloot.activate",
                     InputConstants.Type.KEYSYM,
@@ -222,7 +205,6 @@ public class AutoQuickLoot {
                     "key.categories.autoquickloot"
             );
 
-            // New toggle key (default: unbound — player assigns in Controls)
             toggleKey = new KeyMapping(
                     "key.autoquickloot.toggle",
                     InputConstants.Type.KEYSYM,
@@ -230,8 +212,16 @@ public class AutoQuickLoot {
                     "key.categories.autoquickloot"
             );
 
-            if (quickLootKey != null) event.register(quickLootKey);
-            if (toggleKey    != null) event.register(toggleKey);
+            hudPositionKey = new KeyMapping(
+                    "key.autoquickloot.editHudPosition",
+                    InputConstants.Type.KEYSYM,
+                    GLFW.GLFW_KEY_UNKNOWN,
+                    "key.categories.autoquickloot"
+            );
+
+            if (quickLootKey  != null) event.register(quickLootKey);
+            if (toggleKey     != null) event.register(toggleKey);
+            if (hudPositionKey != null) event.register(hudPositionKey);
         }
     }
 }
