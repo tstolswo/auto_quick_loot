@@ -1,5 +1,9 @@
 # Auto Quick Loot - Changelog
 
+## [1.2.0] - 2026-05-06
+### Added
+- Added support for Loot Shulkers (`lootr:lootr_shulker`).
+
 ## [1.1.0] - 2026-05-06
 ### Added
 - Added support for Lootr containers! The auto-loot keybinding will now automatically loot items from `lootr:lootr_barrel` in addition to `lootr:lootr_chest`.

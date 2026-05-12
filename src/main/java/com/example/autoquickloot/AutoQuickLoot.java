@@ -82,7 +82,7 @@ public class AutoQuickLoot {
             BlockState state = mc.level.getBlockState(pos);
             Block block = state.getBlock();
             String blockId = BuiltInRegistries.BLOCK.getKey((Block)block).toString();
-            if (!blockId.equals("lootr:lootr_chest") && !blockId.equals("lootr:lootr_barrel")) {
+            if (!blockId.equals("lootr:lootr_chest") && !blockId.equals("lootr:lootr_barrel") && !blockId.equals("lootr:lootr_shulker")) {
                 return;
             }
             if (triggered.getOrDefault(screen, false).booleanValue()) {
