@@ -20,7 +20,7 @@ To compile the mod yourself, open a terminal in the project root and run:
 ```bash
 ./gradlew build
 ```
-The compiled `.jar` file will be located in `build/libs/`.
+The compiled `.jar` file will be located in `releases/`.
 
 ## Credits
 - **Authors**: Wolverbunny, im_spot
