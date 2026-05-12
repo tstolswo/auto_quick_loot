@@ -29,7 +29,3 @@ forge*changelog.txt
 
 # Include stubs.jar for compilation
 !libs/stubs.jar
-
-# Allow the releases directory (published JARs for download)
-!releases/
-!releases/**

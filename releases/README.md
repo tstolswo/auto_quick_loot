@@ -1,20 +1,17 @@
 # Releases
 
-Pre-compiled JAR files are published here for easy installation.
+Pre-compiled JAR files are distributed via **GitHub Releases**.
 
 ## How to install
 
-1. Download the latest JAR from this directory.
-2. Drop it into your Minecraft `mods/` folder.
-3. Launch the game — no further setup required.
+1. Go to the [Releases page](https://github.com/tstolswo/auto_quick_loot/releases).
+2. Download the latest `autoquickloot-x.x.x.jar`.
+3. Drop it into your Minecraft `mods/` folder.
+4. Launch the game — no further setup required.
 
 ## Version history
 
-| Version | Minecraft | Changes |
-|---------|-----------|---------|
-| [autoquickloot-1.3.1.jar](autoquickloot-1.3.1.jar) | 1.20.1 | Fix toggle key label; drag-to-reposition HUD editor |
-| [autoquickloot-1.3.0.jar](autoquickloot-1.3.0.jar) | 1.20.1 | Toggle mode, configurable HUD indicator, Forge config |
-| [autoquickloot-1.2.0.jar](autoquickloot-1.2.0.jar) | 1.20.1 | Added `lootr:lootr_shulker` support |
-| [autoquickloot-1.1.0.jar](autoquickloot-1.1.0.jar) | 1.20.1 | Added `lootr:lootr_barrel` support |
+All past releases and their changelogs are available on the
+[GitHub Releases page](https://github.com/tstolswo/auto_quick_loot/releases).
 
 > Want to build from source instead? See the [root README](../README.md).
