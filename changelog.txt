@@ -1,5 +1,18 @@
 # Auto Quick Loot - Changelog
 
+## [1.3.0] - 2026-05-12
+### Added
+- Added **Toggle Mode**: a new `Auto Quick Loot: Toggle` keybinding (unbound by default, assign in Controls)
+  that turns automatic looting on/off without needing to hold a key.
+- Added a configurable HUD status indicator: when Toggle Mode is active, a small
+  "Auto Quick Loot is enabled" notice appears in green text with a translucent background.
+- Added client-side config file (`config/autoquickloot-client.toml`) with the following options:
+  - `toggle.enabledByDefault` — start each session with Toggle Mode already on (default: false).
+  - `hud.enabled`   — show/hide the HUD indicator (default: true).
+  - `hud.anchor`    — screen corner for the indicator: TOP_LEFT, TOP_RIGHT, BOTTOM_LEFT, BOTTOM_RIGHT (default: BOTTOM_RIGHT).
+  - `hud.offsetX`   — horizontal pixel offset inward from the chosen corner (default: 10).
+  - `hud.offsetY`   — vertical pixel offset inward from the chosen corner (default: 10).
+
 ## [1.2.0] - 2026-05-06
 ### Added
 - Added support for Loot Shulkers (`lootr:lootr_shulker`).
